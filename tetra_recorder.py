@@ -63,7 +63,7 @@ class tetra_recorder:
 
 	def timeout_calls(self):
 		for channel in self.channels:
-			if self.channels[channel]['callid']:
+			if self.channels[channel]['call_id']:
 				now = datetime.now()
 				if now - self.channels[channel]['last_payload_time'] > timedelta(minutes=5):
 					self.debug("Call {} on channel {} timed out without being released.".format(self.channels[channel]['callid'], channel))
