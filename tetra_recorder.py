@@ -56,7 +56,6 @@ class tetra_recorder:
 				self.channels[channel]['file'].close()
 				if os.stat(self.channels[channel]['filename']).st_size == 0:
 					os.unlink(self.channels[channel]['filename'])
-			self.channels[channel]['filename'] = filename
 			self.channels[channel]['file'] = open(filename, 'ab')
 
 		self.channels[channel]['filename'] = filename
@@ -71,13 +70,10 @@ class tetra_recorder:
 					self.channels[channel]['call_start'] = datetime.now()
 					self.channels[channel]['ssis'] = []
 					self.update_file(channel, rename=False)
-					
-
 
 	def disconnect_call(self, call_id, ssi):
 		for chan in self.channels:
 			if self.channels[chan]['call_id'] == call_id:
-				found = True
 				try:
 					self.channels[chan]['ssis'].remove(ssi)
 				except ValueError:
