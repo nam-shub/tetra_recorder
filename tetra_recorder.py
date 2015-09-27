@@ -66,11 +66,7 @@ class tetra_recorder:
 				now = datetime.now()
 				if now - self.channels[channel]['last_payload_time'] > timedelta(minutes=5):
 					self.debug("Call {} on channel {} timed out without being released.".format(self.channels[channel]['callid'], channel))
-					self.channels[channel]['call_id'] = None
-					self.channels[channel]['call_start'] = datetime.now()
-					self.channels[channel]['last_payload_time'] = datetime.now()
-					self.channels[channel]['ssis'] = []
-					self.update_file(channel, rename=False)
+					self.create_call(None, channel)
 
 	def disconnect_call(self, call_id, ssi):
 		for chan in self.channels:
@@ -82,9 +78,7 @@ class tetra_recorder:
 
 				if not self.channels[chan]['ssis']:
 					self.log("Call ended on channel {} (call_id={}).".format(chan, self.channels[chan]['call_id']))
-					self.channels[chan]['call_id'] = None
-					self.channels[channel]['call_start'] = datetime.now()
-					self.update_file()
+					self.create_call(None, chan)
 
 				return(0)
 
