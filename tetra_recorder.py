@@ -23,7 +23,7 @@ class tetra_recorder:
 
 		self.channels = {}
 		for channel in range(0, 64):
-			self.channels[channel] = { 'file':None, 'filename':None, 'ssis':[], 'call_id':None, 'call_start':datetime.now() }
+			self.channels[channel] = { 'file':None, 'filename':None, 'ssis':[], 'call_id':None, 'call_start':datetime.now(), 'last_payload_time':datetime.now() }
 			self.update_file(channel, rename=False)
 
 	def log(self, msg):
@@ -68,6 +68,7 @@ class tetra_recorder:
 					self.debug("Call {} on channel {} timed out without being released.".format(self.channels[channel]['callid'], channel))
 					self.channels[channel]['call_id'] = None
 					self.channels[channel]['call_start'] = datetime.now()
+					self.channels[channel]['last_payload_time'] = datetime.now()
 					self.channels[channel]['ssis'] = []
 					self.update_file(channel, rename=False)
 
@@ -95,11 +96,13 @@ class tetra_recorder:
 		self.channels[channel]['call_id'] = call_id
 		self.channels[channel]['call_start'] = datetime.now()
 		self.channels[channel]['ssis'] = []
+		self.channels[channel]['last_payload_time'] = datetime.now()
 		self.update_file(channel, rename=False)
 
 	def process_payload(self, payload_packet):
 		if payload_packet[:3] == b'TRA':
 			channel = int(payload_packet[3:5].decode('ascii'), 16)
+			self.channels[channel]['last_payload_time'] = datetime.now()
 			if(channel < 1 or channel > 63):
 				#telive drops these, control channels?
 				self.log("channel < 1 or channel > 63 in payload packet:\n{}".format(payload_packet))
