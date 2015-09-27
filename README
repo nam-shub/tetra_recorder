@@ -1,0 +1,38 @@
+tetra_recorder
+==============
+
+Description
+-----------
+This is a tool to record TETRA calls. It is meant as a replacement for SQ5BPF's
+telive tool:
+https://github.com/sq5bpf/telive
+
+Many thanks to the osmocom guys for osmo-tetra for doing the heavy lifting here,
+and to SQ5BPF for tirelessly filling in the blanks.
+
+It will listen to a port and expect debug dumps from the hacked tetra-rx
+processes. The tool is very basic, it can only dump voice calls. I wanted
+something without GUI, and that was not written in C.
+
+Things not implemented, because I don't see them on the networks I listen to:
+* SDS text/data messages (or in fact any SDS processing)
+* Location logging
+
+This code is written from intuition looking at the TETRA messages and from
+looking at the telive code. I have not read much of the ETSI specs, so there's
+bound to be incorrect behavior.
+
+Patches welcome!
+
+Usage
+-----
+Follow the telive_doc.pdf for everything except the telive program itself.
+Change the settings (PORTS and OUTPATH) at the top of tetra_recorder.py.
+Unlike telive, it is possible to watch multiple TETRA networks using one
+tetra_recorder process, just put multiple ports matching the tetra-rx
+processes in PORTS.
+
+If you want to run this headless like I do, you can change the GRC flowgraphs
+to remove all the WX GUI elements, change the top_block type and run it through
+'grcc' (part of gnuradio) to get a python script out.
+
