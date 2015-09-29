@@ -10,6 +10,7 @@ from pprint import pprint, pformat
 import select
 import os
 import sys
+import shutil
 
 PORTS = [7381, 7382, 7383, 7384]
 OUTPATH=os.path.join(os.getenv('HOME'), 'tetra_recordings')
@@ -34,7 +35,7 @@ class tetra_recorder:
 			print("{}: DEBUG: {}".format(self.frequency, msg))
 
 	def update_file(self, channel, rename=False):
-		filename = os.path.join(self.outpath, self.filename_prefix) + "_channel{}".format(channel)
+		filename = os.path.join(self.outpath, 'tmp', self.filename_prefix) + "_channel{}".format(channel)
 		filename += "_" + self.channels[channel]['call_start'].isoformat()
 
 		if self.channels[channel]['call_id']:
@@ -56,6 +57,8 @@ class tetra_recorder:
 				self.channels[channel]['file'].close()
 				if os.stat(self.channels[channel]['filename']).st_size == 0:
 					os.unlink(self.channels[channel]['filename'])
+				else:
+					shutil.move(self.channels[channel]['filename'], os.path.join(self.outpath, 'acelp'))
 			self.channels[channel]['file'] = open(filename, 'ab')
 
 		self.channels[channel]['filename'] = filename
@@ -170,6 +173,13 @@ class tetra_recorder:
 def main():
 	recorders = {}
 	sockets = []
+
+	try:
+		os.makedirs(os.path.join(OUTPATH, 'acelp'))
+		os.makedirs(os.path.join(OUTPATH, 'tmp'))
+	except FileExistsError:
+		pass
+
 	for port in PORTS:
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.bind(('127.0.0.1', port))
