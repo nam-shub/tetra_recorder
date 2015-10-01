@@ -88,6 +88,12 @@ class tetra_recorder:
 		self.log("Attempted to disconnect SSI {} from unknown call_id {}".format(ssi, call_id))
 		return(1)
 
+	def add_ssi(self, channel, ssi):
+		if ssi not in self.channels[channel]['ssis']:
+			self.log("New participant {} for call_id {}".format(ssi, self.channels[channel]['call_id']))
+			self.channels[channel]['ssis'].append(ssi)
+			self.update_file(channel, rename=True)
+
 	def create_call(self, call_id, channel):
 		self.log("New call on channel {} (call_id={}).".format(channel, call_id))
 		self.channels[channel]['call_id'] = call_id
@@ -138,14 +144,14 @@ class tetra_recorder:
 			if self.channels[channel]['call_id'] != int(status['CID']):
 				self.create_call(int(status['CID']), channel)
 
-		if status['FUNC'] in ('D-SETUP', 'D-CONNECT', 'DSETUPDEC'):
-			if status['SSI'] not in self.channels[channel]['ssis']:
-				self.log("New participant {} for call_id {}".format(status['SSI'], self.channels[channel]['call_id']))
-				self.channels[channel]['ssis'].append(status['SSI'])
-				self.update_file(channel, rename=True)
+			self.add_ssi(channel, int(status['SSI']))
+
+		if status['FUNC'] in ('D-SETUP', 'D-CONNECT'):
+			if status['IDT'] == 6: # ADDR_TYPE_SSI_USAGE
+				self.add_ssi(channel, int(status['SSI']))
 
 		if status['FUNC'] in ('DRELEASEDEC'):
-			self.disconnect_call(int(status['CID']), status['SSI'])
+			self.disconnect_call(int(status['CID']), int(status['SSI']))
 				
 
 		if status['FUNC'] in ('FREQINFO1', 'NETINFO1'):
