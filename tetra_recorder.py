@@ -14,11 +14,12 @@ import shutil
 
 PORTS = [7381, 7382, 7383, 7384]
 OUTPATH=os.path.join(os.getenv('HOME'), 'tetra_recordings')
+FILENAME_PATTERN="{call_start}_{frequency}_{channel}_{call_id}_{ssis}.acelp"
 
 class tetra_recorder:
-	def __init__(self, outpath, filename_prefix, debug=False):
+	def __init__(self, outpath, filename_pattern, debug=False):
 		self.outpath = outpath
-		self.filename_prefix = filename_prefix
+		self.filename_pattern = filename_pattern
 		self.frequency = "Unknown frequency"
 		self._debug=debug
 
@@ -35,16 +36,18 @@ class tetra_recorder:
 			print("{}: DEBUG: {}".format(self.frequency, msg))
 
 	def update_file(self, channel, rename=False):
-		filename = os.path.join(self.outpath, 'tmp', self.filename_prefix) + "_channel{}".format(channel)
-		filename += "_" + self.channels[channel]['call_start'].isoformat()
-
-		if self.channels[channel]['call_id']:
-			filename += "_" + str(self.channels[channel]['call_id'])
-			for ssi in self.channels[channel]['ssis']:
-				filename += "_" + str(ssi)
-		else:
-			filename += "_unknown"
-		filename += ".acelp"
+		ssis = [ str(ssi) for ssi in self.channels[channel]['ssis'] ]
+		filename = os.path.join(
+			self.outpath,
+			'tmp',
+			self.filename_pattern.format(
+				call_start=self.channels[channel]['call_start'].isoformat(),
+				frequency=self.frequency,
+				channel=channel,
+				call_id=self.channels[channel]['call_id'],
+				ssis='_'.join(ssis)
+			)
+		)
 
 		if rename:
 			# Updating existing call with open filehandle, just rename it.
@@ -152,10 +155,13 @@ class tetra_recorder:
 
 		if status['FUNC'] in ('DRELEASEDEC'):
 			self.disconnect_call(int(status['CID']), int(status['SSI']))
-				
 
-		if status['FUNC'] in ('FREQINFO1', 'NETINFO1'):
-			self.frequency = "{}MHz".format(float(status['DLF']) / (1000*1000))
+		if status['FUNC'] in ('NETINFO1'):
+			freq = "{}MHz".format(float(status['DLF']) / (1000*1000))
+			if freq != self.frequency:
+				self.frequency = freq
+				for channel in self.channels:
+					self.update_file(channel, rename=True)
 
 		if status['FUNC'] not in ('D-SETUP', 'D-CONNECT', 'DSETUPDEC', 'D-RELEASE', 'D-DISCONNECT', 'DRELEASEDEC', 'FREQINFO1', 'NETINFO1', 'BURST', 'FREQINFO2', 'D-FACILITY', 'D-TX'):
 			self.log(pformat(status))
@@ -189,9 +195,8 @@ def main():
 	for port in PORTS:
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.bind(('127.0.0.1', port))
-		recorders[port] = tetra_recorder(OUTPATH, "tetrarec_{}".format(port))
+		recorders[port] = tetra_recorder(OUTPATH, FILENAME_PATTERN)
 		sockets.append(s)
-
 
 	last_timeout_run = datetime.now()
 	timeout_run_interval = timedelta(seconds=30)

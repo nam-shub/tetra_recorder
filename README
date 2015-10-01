@@ -27,10 +27,10 @@ Patches welcome!
 Usage
 -----
 Follow the telive_doc.pdf for everything except the telive program itself.
-Change the settings (PORTS and OUTPATH) at the top of tetra_recorder.py.
-Unlike telive, it is possible to watch multiple TETRA networks using one
-tetra_recorder process, just put multiple ports matching the tetra-rx
-processes in PORTS.
+Change the settings (PORTS, OUTPATH and FILENAME_TEMPLATE) at the top of
+tetra_recorder.py. Unlike telive, it is possible to watch multiple TETRA
+networks using one tetra_recorder process, just put multiple ports matching
+the tetra-rx processes in PORTS.
 
 If you want to run this headless like I do, you can change the GRC flowgraphs
 to remove all the WX GUI elements, change the top_block type and run it through
